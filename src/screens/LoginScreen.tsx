@@ -27,7 +27,7 @@ export default function LoginScreen({ navigation }: any) {
     try {
       setLoading(true);
       await loginUser(email.trim(), password);
-      navigation.replace('Dashboard');
+      navigation.replace('MainTabs');
     } catch (error: any) {
       Alert.alert(
         'Login Failed',

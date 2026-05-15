@@ -38,7 +38,7 @@ export default function RegisterScreen({ navigation }: any) {
     try {
       setLoading(true);
       await registerUser(email.trim(), password);
-      navigation.replace('Dashboard');
+      navigation.replace('MainTabs');
     } catch (error: any) {
     //   Alert.alert('Registration Failed', 'Please check your details and try again.');
       Alert.alert(
