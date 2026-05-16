@@ -60,3 +60,11 @@ export const markHazardReportAsSynced = (id: number) => {
     [id]
   );
 };
+
+export const getAllPendingReports = () => {
+  return db.getAllSync(`
+    SELECT * FROM pending_hazard_reports
+    WHERE syncStatus = 'pending'
+    ORDER BY createdAt ASC;
+  `);
+};
