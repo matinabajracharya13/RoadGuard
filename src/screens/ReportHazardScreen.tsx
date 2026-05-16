@@ -9,8 +9,10 @@ import {
   ScrollView,
 } from "react-native";
 import { useTheme } from "../context/ThemeContext";
-import { getCurrentLocation } from "../services/locationService";
 import { submitHazardReport } from "../services/hazardService";
+import { savePendingHazardReport } from "../services/sqliteService";
+import { getCurrentLocation } from "../services/locationService";
+import NetInfo from "@react-native-community/netinfo";
 
 export default function ReportHazardScreen() {
   const { theme } = useTheme();
@@ -39,38 +41,78 @@ Lng: ${currentLocation.longitude.toFixed(4)}`,
   };
 
   const handleSubmit = async () => {
-    if (!hazardType.trim() || !severity.trim() || !description.trim()) {
-      Alert.alert("Missing Details", "Please fill in all fields.");
-      return;
-    }
+  if (!hazardType.trim() || !severity.trim() || !description.trim()) {
+    Alert.alert('Missing Details', 'Please fill in all fields.');
+    return;
+  }
 
-    if (!location) {
-      Alert.alert(
-        "Location Required",
-        "Please capture your current location first.",
-      );
-      return;
-    }
+  if (!location) {
+    Alert.alert('Location Required', 'Please capture your current location first.');
+    return;
+  }
 
-    try {
-      await submitHazardReport({
-        hazardType: hazardType.trim(),
-        severity: severity.trim(),
-        description: description.trim(),
-        latitude: location.latitude,
-        longitude: location.longitude,
-      });
-
-      Alert.alert("Report Submitted", "Your hazard report has been saved.");
-
-      setHazardType("");
-      setSeverity("");
-      setDescription("");
-      setLocation(null);
-    } catch (error: any) {
-      Alert.alert("Submission Failed", error.message);
-    }
+  const reportData = {
+    hazardType: hazardType.trim(),
+    severity: severity.trim(),
+    description: description.trim(),
+    latitude: location.latitude,
+    longitude: location.longitude,
   };
+
+  try {
+    const networkState = await NetInfo.fetch();
+
+    if (!networkState.isConnected) {
+      savePendingHazardReport(
+        reportData.hazardType,
+        reportData.severity,
+        reportData.description,
+        reportData.latitude,
+        reportData.longitude
+      );
+
+      Alert.alert(
+        'Saved Offline',
+        'No internet connection. Your report has been saved locally.'
+      );
+
+      setHazardType('');
+      setSeverity('');
+      setDescription('');
+      setLocation(null);
+      return;
+    }
+
+    await submitHazardReport(reportData);
+
+    Alert.alert('Report Submitted', 'Your hazard report has been saved online.');
+
+    setHazardType('');
+    setSeverity('');
+    setDescription('');
+    setLocation(null);
+  } catch (error: any) {
+    Alert.alert('fjrhrh')
+    console.log('fjrhrh')
+    savePendingHazardReport(
+      reportData.hazardType,
+      reportData.severity,
+      reportData.description,
+      reportData.latitude,
+      reportData.longitude
+    );
+
+    Alert.alert(
+      'Saved Offline',
+      'Something went wrong online, so your report was saved locally.'
+    );
+
+    setHazardType('');
+    setSeverity('');
+    setDescription('');
+    setLocation(null);
+  }
+};
 
   return (
     <ScrollView
