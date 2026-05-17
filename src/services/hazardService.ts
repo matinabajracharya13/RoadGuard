@@ -55,3 +55,13 @@ export const getUserHazardReports = async () => {
     source: "online",
   }));
 };
+
+export const getAllHazardReports = async () => {
+  const snapshot = await getDocs(collection(db, 'hazardReports'));
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    source: 'online',
+  }));
+};

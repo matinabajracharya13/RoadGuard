@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,42 +7,39 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
-} from "react-native";
-import { useTheme } from "../context/ThemeContext";
-import { submitHazardReport } from "../services/hazardService";
-import { savePendingHazardReport } from "../services/sqliteService";
-import { getCurrentLocation } from "../services/locationService";
-import NetInfo from "@react-native-community/netinfo";
-import { Image } from "react-native";
-import { captureHazardPhoto } from "../services/cameraService";
-import { uploadHazardImage } from '../services/storageService';
+  Image,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import NetInfo from '@react-native-community/netinfo';
+
+import { useTheme } from '../context/ThemeContext';
+import { getCurrentLocation } from '../services/locationService';
+import { submitHazardReport } from '../services/hazardService';
+import { savePendingHazardReport } from '../services/sqliteService';
+import { captureHazardPhoto } from '../services/cameraService';
 
 export default function ReportHazardScreen() {
   const { theme } = useTheme();
 
-  const [hazardType, setHazardType] = useState("");
-  const [severity, setSeverity] = useState("");
-  const [description, setDescription] = useState("");
+  const [hazardType, setHazardType] = useState('');
+  const [severity, setSeverity] = useState('');
+  const [description, setDescription] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
 
-  const handleGetLocation = async () => {
-    try {
-      const currentLocation = await getCurrentLocation();
-      setLocation(currentLocation);
+  const hazardTypes = [
+    { label: 'Pothole', icon: 'alert-circle-outline' },
+    { label: 'Road Debris', icon: 'construct-outline' },
+    { label: 'Flooding', icon: 'water-outline' },
+    { label: 'Construction', icon: 'hammer-outline' },
+    { label: 'Accident', icon: 'car-sport-outline' },
+    { label: 'Other', icon: 'ellipsis-horizontal-circle-outline' },
+  ];
 
-      Alert.alert(
-        "Location Captured",
-        `Lat: ${currentLocation.latitude.toFixed(4)}
-Lng: ${currentLocation.longitude.toFixed(4)}`,
-      );
-    } catch (error: any) {
-      Alert.alert("Location Error", error.message);
-    }
-  };
+  const severityLevels = ['Low', 'Medium', 'High'];
 
   const handleCapturePhoto = async () => {
     try {
@@ -50,67 +47,96 @@ Lng: ${currentLocation.longitude.toFixed(4)}`,
 
       if (uri) {
         setPhotoUri(uri);
-        Alert.alert("Photo Captured", "Hazard photo has been attached.");
+        Alert.alert('Photo Captured', 'Hazard photo has been attached.');
       }
     } catch (error: any) {
-      Alert.alert("Camera Error", error.message);
+      Alert.alert('Camera Error', error.message);
     }
   };
 
+  const handleGetLocation = async () => {
+    try {
+      const currentLocation = await getCurrentLocation();
+      setLocation(currentLocation);
+
+      Alert.alert(
+        'Location Captured',
+        `GPS (${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)})`
+      );
+    } catch (error: any) {
+      Alert.alert('Location Error', error.message);
+    }
+  };
+
+  const resetForm = () => {
+    setHazardType('');
+    setSeverity('');
+    setDescription('');
+    setLocation(null);
+    setPhotoUri(null);
+  };
+
   const handleSubmit = async () => {
-  if (!hazardType || !severity || !description) {
-    Alert.alert('Missing Details', 'Please fill in all fields.');
-    return;
-  }
-
-  if (!location) {
-    Alert.alert('Location Required', 'Please capture your location.');
-    return;
-  }
-
-  try {
-    let photoUrl = '';
-
-    if (photoUri) {
-      photoUrl = await uploadHazardImage(photoUri);
+    if (!hazardType || !severity || !description.trim()) {
+      Alert.alert('Missing Details', 'Please complete all required fields.');
+      return;
     }
 
-    await submitHazardReport({
+    if (!location) {
+      Alert.alert('Location Required', 'Please capture GPS location first.');
+      return;
+    }
+
+    const reportData = {
       hazardType,
       severity,
-      description,
+      description: description.trim(),
       latitude: location.latitude,
       longitude: location.longitude,
-      photoUrl,
-    });
+    };
 
-    Alert.alert('Success', 'Report submitted with photo.');
+    try {
+      const networkState = await NetInfo.fetch();
 
-    setHazardType('');
-    setSeverity('');
-    setDescription('');
-    setLocation(null);
-    setPhotoUri(null);
+      if (!networkState.isConnected) {
+        savePendingHazardReport(
+          reportData.hazardType,
+          reportData.severity,
+          reportData.description,
+          reportData.latitude,
+          reportData.longitude
+        );
 
-  } catch (error: any) {
-    // offline fallback (no upload)
-    savePendingHazardReport(
-      hazardType,
-      severity,
-      description,
-      location.latitude,
-      location.longitude
-    );
+        Alert.alert(
+          'Saved Offline',
+          'No internet connection. Your report has been saved locally.'
+        );
 
-    Alert.alert('Saved Offline', 'Report saved locally (no image upload).');
+        resetForm();
+        return;
+      }
 
-    setHazardType('');
-    setSeverity('');
-    setDescription('');
-    setLocation(null);
-    setPhotoUri(null);
-  }
-};
+      await submitHazardReport(reportData);
+
+      Alert.alert('Report Submitted', 'Your hazard report has been saved online.');
+      resetForm();
+    } catch {
+      savePendingHazardReport(
+        reportData.hazardType,
+        reportData.severity,
+        reportData.description,
+        reportData.latitude,
+        reportData.longitude
+      );
+
+      Alert.alert(
+        'Saved Offline',
+        'Something went wrong online, so your report was saved locally.'
+      );
+
+      resetForm();
+    }
+  };
 
   return (
     <ScrollView
@@ -119,79 +145,178 @@ Lng: ${currentLocation.longitude.toFixed(4)}`,
         { backgroundColor: theme.background },
       ]}
     >
-      <Text style={[styles.title, { color: theme.text }]}>
+      <Text style={[styles.header, { color: theme.text }]}>
         Report Road Hazard
       </Text>
 
-      <Text style={[styles.subtitle, { color: theme.subText }]}>
-        Help improve road safety by reporting hazards.
+      <Text style={[styles.subHeader, { color: theme.subText }]}>
+        Capture hazard details, GPS location, and evidence.
       </Text>
 
-      <Text style={[styles.label, { color: theme.text }]}>Hazard Type</Text>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>
+        Hazard Type
+      </Text>
 
-      <View style={styles.hazardContainer}>
-        {[
-          "Pothole",
-          "Road Debris",
-          "Flooding",
-          "Construction",
-          "Accident",
-          "Other",
-        ].map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={[
-              styles.hazardButton,
-              {
-                backgroundColor:
-                  hazardType === type ? theme.primary : theme.card,
-                borderColor: hazardType === type ? theme.primary : theme.border,
-              },
-            ]}
-            onPress={() => setHazardType(type)}
-          >
-            <Text
+      <View style={styles.hazardGrid}>
+        {hazardTypes.map((item) => {
+          const selected = hazardType === item.label;
+
+          return (
+            <TouchableOpacity
+              key={item.label}
               style={[
-                styles.hazardText,
+                styles.hazardButton,
                 {
-                  color: hazardType === type ? "#ffffff" : theme.text,
+                  backgroundColor: selected ? theme.primary : theme.card,
+                  borderColor: selected ? theme.primary : theme.border,
                 },
               ]}
+              onPress={() => setHazardType(item.label)}
             >
-              {type}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Ionicons
+                name={item.icon as any}
+                size={20}
+                color={selected ? '#ffffff' : theme.text}
+              />
+              <Text
+                style={[
+                  styles.hazardText,
+                  { color: selected ? '#ffffff' : theme.text },
+                ]}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
-      <Text style={[styles.label, { color: theme.text }]}>Severity</Text>
 
-      <View style={styles.severityContainer}>
-        {["Low", "Medium", "High"].map((level) => (
-          <TouchableOpacity
-            key={level}
-            style={[
-              styles.severityButton,
-              {
-                backgroundColor:
-                  severity === level ? theme.primary : theme.card,
-                borderColor: severity === level ? theme.primary : theme.border,
-              },
-            ]}
-            onPress={() => setSeverity(level)}
-          >
-            <Text
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>
+        Severity
+      </Text>
+
+      <View style={styles.severityRow}>
+        {severityLevels.map((level) => {
+          const selected = severity === level;
+
+          return (
+            <TouchableOpacity
+              key={level}
               style={[
-                styles.severityText,
+                styles.severityButton,
                 {
-                  color: severity === level ? "#ffffff" : theme.text,
+                  backgroundColor: selected ? theme.primary : theme.card,
+                  borderColor: selected ? theme.primary : theme.border,
                 },
               ]}
+              onPress={() => setSeverity(level)}
             >
-              {level}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.severityText,
+                  { color: selected ? '#ffffff' : theme.text },
+                ]}
+              >
+                {level}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
+
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>
+        Evidence
+      </Text>
+
+      <View style={styles.featureGrid}>
+        <TouchableOpacity
+          style={[
+            styles.featureCard,
+            {
+              backgroundColor: theme.card,
+              borderColor: photoUri ? theme.primary : theme.border,
+            },
+          ]}
+          onPress={handleCapturePhoto}
+          activeOpacity={0.85}
+        >
+          {photoUri ? (
+            <>
+              <Image source={{ uri: photoUri }} style={styles.cardThumbnail} />
+
+              <Text style={[styles.featureTitle, { color: theme.text }]}>
+                Photo Added
+              </Text>
+
+              <TouchableOpacity onPress={() => setPhotoUri(null)}>
+                <Text style={styles.removeInlineText}>Remove</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Ionicons name="camera-outline" size={28} color={theme.primary} />
+
+              <Text style={[styles.featureTitle, { color: theme.text }]}>
+                Capture Photo
+              </Text>
+
+              <Text style={[styles.featureSubtitle, { color: theme.subText }]}>
+                Attach visual evidence
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.featureCard,
+            {
+              backgroundColor: theme.card,
+              borderColor: location ? theme.primary : theme.border,
+            },
+          ]}
+          onPress={handleGetLocation}
+          activeOpacity={0.85}
+        >
+          {location ? (
+            <>
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={30}
+                color={theme.primary}
+              />
+
+              <Text style={[styles.featureTitle, { color: theme.text }]}>
+                GPS Added
+              </Text>
+
+              <Text style={[styles.featureSubtitle, { color: theme.subText }]}>
+                {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+              </Text>
+
+              <TouchableOpacity onPress={() => setLocation(null)}>
+                <Text style={styles.removeInlineText}>Remove</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Ionicons name="location-outline" size={28} color={theme.primary} />
+
+              <Text style={[styles.featureTitle, { color: theme.text }]}>
+                Capture GPS
+              </Text>
+
+              <Text style={[styles.featureSubtitle, { color: theme.subText }]}>
+                Record coordinates
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>
+        Description
+      </Text>
 
       <TextInput
         style={[
@@ -202,7 +327,7 @@ Lng: ${currentLocation.longitude.toFixed(4)}`,
             borderColor: theme.border,
           },
         ]}
-        placeholder="Describe the hazard"
+        placeholder="Describe the hazard..."
         placeholderTextColor={theme.subText}
         multiline
         numberOfLines={5}
@@ -211,42 +336,11 @@ Lng: ${currentLocation.longitude.toFixed(4)}`,
       />
 
       <TouchableOpacity
-        style={[styles.secondaryButton, { borderColor: theme.primary }]}
-        onPress={handleCapturePhoto}
-      >
-        <Text style={[styles.secondaryText, { color: theme.primary }]}>
-          Capture Hazard Photo
-        </Text>
-      </TouchableOpacity>
-
-      {photoUri && (
-        <Image source={{ uri: photoUri }} style={styles.previewImage} />
-      )}
-
-      <TouchableOpacity
-        style={[styles.secondaryButton, { borderColor: theme.primary }]}
-        onPress={handleGetLocation}
-      >
-        <Text style={[styles.secondaryText, { color: theme.primary }]}>
-          Get Current Location
-        </Text>
-
-        {location && (
-          <Text style={[styles.locationText, { color: theme.subText }]}>
-            Current Location:
-            {"\n"}
-            Latitude: {location.latitude.toFixed(4)}
-            {"\n"}
-            Longitude: {location.longitude.toFixed(4)}
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: theme.primary }]}
+        style={[styles.submitButton, { backgroundColor: theme.primary }]}
         onPress={handleSubmit}
       >
-        <Text style={styles.buttonText}>Submit Hazard Report</Text>
+        <Ionicons name="cloud-upload-outline" size={20} color="#ffffff" />
+        <Text style={styles.submitText}>Submit Hazard Report</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -255,103 +349,114 @@ Lng: ${currentLocation.longitude.toFixed(4)}`,
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
+    padding: 20,
     paddingTop: 60,
+    paddingBottom: 40,
   },
-  title: {
+  header: {
     fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontWeight: 'bold',
   },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 28,
-  },
-  input: {
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 14,
-    borderWidth: 1,
-  },
-  textArea: {
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 18,
-    borderWidth: 1,
-    textAlignVertical: "top",
-    minHeight: 120,
-  },
-  button: {
-    padding: 16,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 12,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  secondaryButton: {
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    borderWidth: 1,
-    marginTop: 4,
-  },
-  secondaryText: {
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  locationText: {
-    marginTop: 14,
-    textAlign: "center",
+  subHeader: {
     fontSize: 14,
+    marginTop: 6,
+    marginBottom: 24,
   },
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 8,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 10,
   },
-
-  severityContainer: {
-    flexDirection: "row",
+  hazardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 16,
   },
-
+  hazardButton: {
+    width: '48%',
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    gap: 6,
+  },
+  hazardText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  severityRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
   severityButton: {
     flex: 1,
-    padding: 13,
-    borderRadius: 10,
     borderWidth: 1,
-    alignItems: "center",
+    borderRadius: 12,
+    padding: 13,
+    alignItems: 'center',
   },
-
   severityText: {
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
-  hazardContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+  featureGrid: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 18,
   },
-
-  hazardButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+  featureCard: {
+    flex: 1,
+    minHeight: 150,
     borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  hazardText: {
-    fontWeight: "600",
+  featureTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginTop: 10,
+    textAlign: 'center',
   },
-  previewImage: {
-    width: "100%",
-    height: 180,
+  featureSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  cardThumbnail: {
+    width: '100%',
+    height: 85,
     borderRadius: 12,
-    marginBottom: 16,
+  },
+  removeInlineText: {
+    color: '#dc2626',
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    minHeight: 120,
+    textAlignVertical: 'top',
+    marginBottom: 18,
+  },
+  submitButton: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  submitText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
