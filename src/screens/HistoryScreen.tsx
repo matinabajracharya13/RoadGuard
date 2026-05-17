@@ -1,10 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
-import { useTheme } from "../context/ThemeContext";
-import { getPendingHazardReports } from "../services/sqliteService";
-import { getUserHazardReports } from "../services/hazardService";
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  RefreshControl,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+import { useTheme } from '../context/ThemeContext';
+import { getPendingHazardReports } from '../services/sqliteService';
+import { getUserHazardReports } from '../services/hazardService';
 import { syncPendingReports } from '../services/syncService';
-import { TouchableOpacity, Alert } from 'react-native';
 
 type HazardReport = {
   id: number | string;
@@ -15,7 +24,7 @@ type HazardReport = {
   longitude: number;
   syncStatus?: string;
   status?: string;
-  source?: string;
+  source?: 'online' | 'offline';
   createdAt: any;
 };
 
@@ -24,33 +33,37 @@ export default function HistoryScreen() {
 
   const [reports, setReports] = useState<HazardReport[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-
+  const [activeTab, setActiveTab] = useState<'uploaded' | 'local'>('uploaded');
 
   const getSeverityColor = (severity: string) => {
-  switch (severity.toLowerCase()) {
-    case 'high':
-      return '#dc2626';
-    case 'medium':
-      return '#f59e0b';
-    default:
-      return '#16a34a';
-  }
-};
+    switch (severity.toLowerCase()) {
+      case 'high':
+        return '#dc2626';
+      case 'medium':
+        return '#f59e0b';
+      default:
+        return '#16a34a';
+    }
+  };
 
-const handleSync = async () => {
-  try {
-    const syncedCount = await syncPendingReports();
+  const formatDate = (createdAt: any) => {
+    if (!createdAt) return 'Time unavailable';
 
-    Alert.alert(
-      'Sync Complete',
-      `${syncedCount} pending reports synced successfully.`
-    );
+    const date = createdAt?.toDate ? createdAt.toDate() : new Date(createdAt);
 
-    await loadReports();
-  } catch {
-    Alert.alert('Sync Failed', 'Please try again.');
-  }
-};
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+
+    return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+  };
 
   const loadReports = async () => {
     try {
@@ -58,18 +71,23 @@ const handleSync = async () => {
 
       const formattedOffline = offlineReports.map((report) => ({
         ...report,
-        source: "offline",
+        source: 'offline' as const,
       }));
 
-      const onlineReports = await getUserHazardReports();
+      const onlineReports = (await getUserHazardReports()) as HazardReport[];
 
-      setReports([...formattedOffline, ...onlineReports] as HazardReport[]);
+      const formattedOnline = onlineReports.map((report) => ({
+        ...report,
+        source: 'online' as const,
+      }));
+
+      setReports([...formattedOnline, ...formattedOffline]);
     } catch (error) {
       const offlineReports = getPendingHazardReports() as HazardReport[];
 
       const formattedOffline = offlineReports.map((report) => ({
         ...report,
-        source: "offline",
+        source: 'offline' as const,
       }));
 
       setReports(formattedOffline);
@@ -86,6 +104,28 @@ const handleSync = async () => {
     setRefreshing(false);
   };
 
+  const handleSync = async () => {
+    try {
+      const syncedCount = await syncPendingReports();
+
+      Alert.alert(
+        'Sync Complete',
+        `${syncedCount} pending reports synced successfully.`
+      );
+
+      await loadReports();
+      setActiveTab('uploaded');
+    } catch {
+      Alert.alert('Sync Failed', 'Please try again.');
+    }
+  };
+
+  const filteredReports = reports.filter((report) =>
+    activeTab === 'uploaded'
+      ? report.source === 'online'
+      : report.source === 'offline'
+  );
+
   const renderItem = ({ item }: { item: HazardReport }) => (
     <View
       style={[
@@ -96,56 +136,137 @@ const handleSync = async () => {
         },
       ]}
     >
-      <Text style={[styles.title, { color: theme.text }]}>
-        {item.hazardType}
-      </Text>
+      <View style={styles.cardHeader}>
+        <Text style={[styles.title, { color: theme.text }]}>
+          {item.hazardType}
+        </Text>
 
-      <View
-  style={[
-    styles.severityBadge,
-    { backgroundColor: getSeverityColor(item.severity) },
-  ]}
->
-  <Text style={styles.badgeText}>
-    {item.severity.toUpperCase()}
-  </Text>
-</View>
+        <View
+          style={[
+            styles.severityBadge,
+            { backgroundColor: getSeverityColor(item.severity) },
+          ]}
+        >
+          <Text style={styles.badgeText}>{item.severity.toUpperCase()}</Text>
+        </View>
+      </View>
 
-      <Text style={[styles.description, { color: theme.subText }]}>
+      <Text
+        style={[styles.description, { color: theme.subText }]}
+        numberOfLines={2}
+      >
         {item.description}
       </Text>
 
-      <Text style={[styles.location, { color: theme.subText }]}>
-        Lat: {item.latitude.toFixed(4)} | Lng: {item.longitude.toFixed(4)}
-      </Text>
+      <View style={styles.metaRow}>
+        <Ionicons name="location-outline" size={16} color={theme.subText} />
+        <Text style={[styles.metaText, { color: theme.subText }]}>
+          GPS ({item.latitude.toFixed(4)}, {item.longitude.toFixed(4)})
+        </Text>
+      </View>
 
-      <Text style={[styles.status, { color: theme.subText }]}>
-        Status: {item.source === "online" ? "Online" : "Pending Offline"}
-      </Text>
+      <View style={styles.metaRow}>
+        <Ionicons
+          name={
+            item.source === 'online'
+              ? 'cloud-done-outline'
+              : 'cloud-offline-outline'
+          }
+          size={16}
+          color={item.source === 'online' ? '#16a34a' : '#f59e0b'}
+        />
+        <Text style={[styles.metaText, { color: theme.subText }]}>
+          {item.source === 'online' ? 'Uploaded to Firebase' : 'Saved locally'}
+        </Text>
+      </View>
 
-      <Text style={[styles.date, { color: theme.subText }]}>
-        {item.createdAt?.toDate
-          ? item.createdAt.toDate().toLocaleString()
-          : new Date(item.createdAt).toLocaleString()}
-      </Text>
+      <View style={styles.metaRow}>
+        <Ionicons name="time-outline" size={16} color={theme.subText} />
+        <Text style={[styles.metaText, { color: theme.subText }]}>
+          {formatDate(item.createdAt)}
+        </Text>
+      </View>
     </View>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.header, { color: theme.text }]}>
-        Hazard Report History
+        Report History
       </Text>
 
-      <TouchableOpacity
-  style={[styles.syncButton, { backgroundColor: theme.primary }]}
-  onPress={handleSync}
->
-  <Text style={styles.syncButtonText}>Sync Pending Reports</Text>
-</TouchableOpacity>
+      <Text style={[styles.subHeader, { color: theme.subText }]}>
+        View uploaded reports and local pending reports.
+      </Text>
+
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            {
+              backgroundColor:
+                activeTab === 'uploaded' ? theme.primary : theme.card,
+              borderColor:
+                activeTab === 'uploaded' ? theme.primary : theme.border,
+            },
+          ]}
+          onPress={() => setActiveTab('uploaded')}
+        >
+          <Ionicons
+            name="cloud-done-outline"
+            size={17}
+            color={activeTab === 'uploaded' ? '#ffffff' : theme.text}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'uploaded' ? '#ffffff' : theme.text },
+            ]}
+          >
+            Uploaded
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            {
+              backgroundColor:
+                activeTab === 'local' ? theme.primary : theme.card,
+              borderColor:
+                activeTab === 'local' ? theme.primary : theme.border,
+            },
+          ]}
+          onPress={() => setActiveTab('local')}
+        >
+          <Ionicons
+            name="phone-portrait-outline"
+            size={17}
+            color={activeTab === 'local' ? '#ffffff' : theme.text}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'local' ? '#ffffff' : theme.text },
+            ]}
+          >
+            Local
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'local' && (
+        <TouchableOpacity
+          style={[styles.syncButton, { backgroundColor: theme.primary }]}
+          onPress={handleSync}
+        >
+          <Ionicons name="sync-outline" size={18} color="#ffffff" />
+          <Text style={styles.syncButtonText}>Sync Pending Reports</Text>
+        </TouchableOpacity>
+      )}
 
       <FlatList
-        data={reports}
+        data={filteredReports}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 30 }}
@@ -154,7 +275,9 @@ const handleSync = async () => {
         }
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: theme.subText }]}>
-            No offline hazard reports found.
+            {activeTab === 'uploaded'
+              ? 'No uploaded reports found.'
+              : 'No local pending reports found.'}
           </Text>
         }
       />
@@ -169,74 +292,91 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   header: {
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: 30,
+    fontWeight: 'bold',
+  },
+  subHeader: {
+    fontSize: 14,
+    marginTop: 6,
     marginBottom: 20,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  tabButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  tabText: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  syncButton: {
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  syncButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
   card: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 14,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 'bold',
+    flex: 1,
+    marginRight: 12,
   },
-  severity: {
-    marginTop: 6,
-    fontWeight: "600",
+  severityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 11,
   },
   description: {
-    marginTop: 8,
+    marginTop: 12,
     fontSize: 14,
+    lineHeight: 20,
   },
-  location: {
-    marginTop: 8,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  metaText: {
+    marginLeft: 6,
     fontSize: 13,
-  },
-  status: {
-    marginTop: 8,
-    fontSize: 13,
-  },
-  date: {
-    marginTop: 6,
-    fontSize: 12,
   },
   emptyText: {
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 40,
     fontSize: 16,
   },
-  severityBadge: {
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 8,
-  alignSelf: 'flex-start',
-  marginTop: 8,
-},
-badgeText: {
-  color: '#fff',
-  fontWeight: 'bold',
-  fontSize: 12,
-},
-statusBadge: {
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 8,
-  alignSelf: 'flex-start',
-  marginTop: 8,
-},
-syncButton: {
-  padding: 14,
-  borderRadius: 10,
-  alignItems: 'center',
-  marginBottom: 18,
-},
-
-syncButtonText: {
-  color: '#ffffff',
-  fontWeight: 'bold',
-  fontSize: 15,
-},
 });
