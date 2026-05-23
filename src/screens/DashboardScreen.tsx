@@ -185,6 +185,12 @@ export default function DashboardScreen({ navigation }: any) {
           </Text>
         }
       />
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: theme.primary }]}
+        onPress={() => navigation.navigate("Report")}
+      >
+        <Ionicons name="add-outline" size={32} color="#ffffff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -254,5 +260,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 40,
     fontSize: 16,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 30,
+    right: 25,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 6,
   },
 });
