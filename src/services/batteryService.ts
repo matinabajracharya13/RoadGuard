@@ -12,7 +12,7 @@ export async function getBatteryLevel(): Promise<number> {
 export function watchBattery(
   onChange: LevelCallback,
   onLow: LevelCallback,
-  threshold: number = 0.15,
+  threshold: number = 0.20,
 ): () => void {
   const sub = Battery.addBatteryLevelListener(({ batteryLevel }) => {
     onChange(batteryLevel);

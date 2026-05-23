@@ -21,11 +21,19 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nabins.RoadGuard"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": []
+    "plugins": [
+      "expo-sqlite"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "44f19f80-2ff8-468d-8139-43a3ca4660ee"
+      }
+    }
   }
 }

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { watchBattery, getBatteryLevel } from "../services/batteryService";
 import { getUserHazardReports } from "../services/hazardService";
 import { getAddressFromCoordinates } from "../services/locationService";
 
@@ -32,6 +33,30 @@ export default function DashboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [addresses, setAddresses] = useState<Record<string, string>>({});
+  const [battery, setBattery] = useState<number>(1);
+  const [isLow, setIsLow] = useState<boolean>(false);
+
+  useEffect(() => {
+    // 1. Get the level once when the screen first mounts
+    getBatteryLevel().then(setBattery);
+
+    // 2. Subscribe to live changes
+    const unsubscribe = watchBattery(
+      (level) => setBattery(level),
+      (low) => {
+        setIsLow(true);
+        console.log("Battery low — pausing background sync", low);
+      },
+    );
+
+    // 3. Clean up when the screen unmounts
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    loadReports();
+  }, []);
+
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
@@ -71,10 +96,7 @@ export default function DashboardScreen({ navigation }: any) {
     }
   };
 
-  useEffect(() => {
-    loadReports();
-  }, []);
-
+  
   const onRefresh = async () => {
     setRefreshing(true);
     await loadReports();
@@ -163,13 +185,40 @@ export default function DashboardScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.header, { color: theme.text }]}>
-        Road Hazard Feed
-      </Text>
+      <View style={styles.headerRow}>
+        <Text style={[styles.header, { color: theme.text }]}>
+          Road Hazard Feed
+        </Text>
+
+        <View style={styles.batteryPill}>
+          <Ionicons
+            name={isLow ? "battery-dead" : "battery-half"}
+            size={16}
+            color={isLow ? "#dc2626" : theme.subText}
+          />
+          <Text
+            style={[
+              styles.batteryText,
+              { color: isLow ? "#dc2626" : theme.subText },
+            ]}
+          >
+            {Math.round(battery * 100)}%
+          </Text>
+        </View>
+      </View>
 
       <Text style={[styles.subHeader, { color: theme.subText }]}>
         Community-reported hazards near road users
       </Text>
+
+      {isLow && (
+        <View style={styles.lowBatteryBanner}>
+          <Ionicons name="warning-outline" size={16} color="#dc2626" />
+          <Text style={styles.lowBatteryText}>
+            Low battery — background sync paused
+          </Text>
+        </View>
+      )}
 
       <FlatList
         data={reports}
@@ -254,5 +303,37 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 40,
     fontSize: 16,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  batteryPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  batteryText: {
+    marginLeft: 4,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  lowBatteryBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fee2e2",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  lowBatteryText: {
+    marginLeft: 6,
+    color: "#dc2626",
+    fontSize: 13,
+    fontWeight: "600",
   },
 });
