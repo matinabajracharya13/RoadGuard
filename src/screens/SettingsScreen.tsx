@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { logoutUser } from '../services/authService';
-import AdBanner from '../components/AdBanner';
+// import AdBanner from '../components/AdBanner';
 
 export default function SettingsScreen({ navigation }: any) {
   const { theme, darkMode, toggleTheme } = useTheme();
@@ -38,7 +38,7 @@ export default function SettingsScreen({ navigation }: any) {
         <Switch value={darkMode} onValueChange={toggleTheme} />
       </View>
 
-      <AdBanner />
+      {/* <AdBanner /> */}
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View>
