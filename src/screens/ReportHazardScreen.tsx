@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,22 +8,26 @@ import {
   Alert,
   ScrollView,
   Image,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import NetInfo from '@react-native-community/netinfo';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import NetInfo from "@react-native-community/netinfo";
 
-import { useTheme } from '../context/ThemeContext';
-import { getCurrentLocation } from '../services/locationService';
-import { submitHazardReport } from '../services/hazardService';
-import { savePendingHazardReport } from '../services/sqliteService';
-import { captureHazardPhoto } from '../services/cameraService';
+import { useTheme } from "../context/ThemeContext";
+import { getCurrentLocation } from "../services/locationService";
+import { submitHazardReport } from "../services/hazardService";
+import { savePendingHazardReport } from "../services/sqliteService";
+import { captureHazardPhoto } from "../services/cameraService";
+import {
+  requestNotificationPermission,
+  sendHazardNotification,
+} from "../services/notificationService";
 
-export default function ReportHazardScreen() {
+export default function ReportHazardScreen({ navigation, route }: any) {
   const { theme } = useTheme();
 
-  const [hazardType, setHazardType] = useState('');
-  const [severity, setSeverity] = useState('');
-  const [description, setDescription] = useState('');
+  const [hazardType, setHazardType] = useState("");
+  const [severity, setSeverity] = useState("");
+  const [description, setDescription] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [location, setLocation] = useState<{
     latitude: number;
@@ -31,15 +35,21 @@ export default function ReportHazardScreen() {
   } | null>(null);
 
   const hazardTypes = [
-    { label: 'Pothole', icon: 'alert-circle-outline' },
-    { label: 'Road Debris', icon: 'construct-outline' },
-    { label: 'Flooding', icon: 'water-outline' },
-    { label: 'Construction', icon: 'hammer-outline' },
-    { label: 'Accident', icon: 'car-sport-outline' },
-    { label: 'Other', icon: 'ellipsis-horizontal-circle-outline' },
+    { label: "Pothole", icon: "alert-circle-outline" },
+    { label: "Road Debris", icon: "construct-outline" },
+    { label: "Flooding", icon: "water-outline" },
+    { label: "Construction", icon: "hammer-outline" },
+    { label: "Accident", icon: "car-sport-outline" },
+    { label: "Other", icon: "ellipsis-horizontal-circle-outline" },
   ];
 
-  const severityLevels = ['Low', 'Medium', 'High'];
+  useEffect(() => {
+    if (route.params?.detectedHazardType) {
+      setHazardType(route.params.detectedHazardType);
+    }
+  }, [route.params]);
+
+  const severityLevels = ["Low", "Medium", "High"];
 
   const handleCapturePhoto = async () => {
     try {
@@ -47,10 +57,10 @@ export default function ReportHazardScreen() {
 
       if (uri) {
         setPhotoUri(uri);
-        Alert.alert('Photo Captured', 'Hazard photo has been attached.');
+        Alert.alert("Photo Captured", "Hazard photo has been attached.");
       }
     } catch (error: any) {
-      Alert.alert('Camera Error', error.message);
+      Alert.alert("Camera Error", error.message);
     }
   };
 
@@ -60,30 +70,30 @@ export default function ReportHazardScreen() {
       setLocation(currentLocation);
 
       Alert.alert(
-        'Location Captured',
-        `GPS (${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)})`
+        "Location Captured",
+        `GPS (${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)})`,
       );
     } catch (error: any) {
-      Alert.alert('Location Error', error.message);
+      Alert.alert("Location Error", error.message);
     }
   };
 
   const resetForm = () => {
-    setHazardType('');
-    setSeverity('');
-    setDescription('');
+    setHazardType("");
+    setSeverity("");
+    setDescription("");
     setLocation(null);
     setPhotoUri(null);
   };
 
   const handleSubmit = async () => {
     if (!hazardType || !severity || !description.trim()) {
-      Alert.alert('Missing Details', 'Please complete all required fields.');
+      Alert.alert("Missing Details", "Please complete all required fields.");
       return;
     }
 
     if (!location) {
-      Alert.alert('Location Required', 'Please capture GPS location first.');
+      Alert.alert("Location Required", "Please capture GPS location first.");
       return;
     }
 
@@ -104,12 +114,12 @@ export default function ReportHazardScreen() {
           reportData.severity,
           reportData.description,
           reportData.latitude,
-          reportData.longitude
+          reportData.longitude,
         );
 
         Alert.alert(
-          'Saved Offline',
-          'No internet connection. Your report has been saved locally.'
+          "Saved Offline",
+          "No internet connection. Your report has been saved locally.",
         );
 
         resetForm();
@@ -117,8 +127,13 @@ export default function ReportHazardScreen() {
       }
 
       await submitHazardReport(reportData);
+      await requestNotificationPermission();
+      await sendHazardNotification(reportData.hazardType, reportData.severity);
 
-      Alert.alert('Report Submitted', 'Your hazard report has been saved online.');
+      Alert.alert(
+        "Report Submitted",
+        "Your hazard report has been saved online.",
+      );
       resetForm();
     } catch {
       savePendingHazardReport(
@@ -126,13 +141,15 @@ export default function ReportHazardScreen() {
         reportData.severity,
         reportData.description,
         reportData.latitude,
-        reportData.longitude
+        reportData.longitude,
       );
 
       Alert.alert(
-        'Saved Offline',
-        'Something went wrong online, so your report was saved locally.'
+        "Saved Offline",
+        "Something went wrong online, so your report was saved locally.",
       );
+      await requestNotificationPermission();
+        await sendHazardNotification(reportData.hazardType, reportData.severity);
 
       resetForm();
     }
@@ -145,9 +162,24 @@ export default function ReportHazardScreen() {
         { backgroundColor: theme.background },
       ]}
     >
-      <Text style={[styles.header, { color: theme.text }]}>
-        Report Road Hazard
-      </Text>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          style={[
+            styles.backButton,
+            {
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+            },
+          ]}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back-outline" size={22} color={theme.text} />
+        </TouchableOpacity>
+
+        <Text style={[styles.header, { color: theme.text }]}>
+          Report Road Hazard
+        </Text>
+      </View>
 
       <Text style={[styles.subHeader, { color: theme.subText }]}>
         Capture hazard details, GPS location, and evidence.
@@ -176,12 +208,12 @@ export default function ReportHazardScreen() {
               <Ionicons
                 name={item.icon as any}
                 size={20}
-                color={selected ? '#ffffff' : theme.text}
+                color={selected ? "#ffffff" : theme.text}
               />
               <Text
                 style={[
                   styles.hazardText,
-                  { color: selected ? '#ffffff' : theme.text },
+                  { color: selected ? "#ffffff" : theme.text },
                 ]}
               >
                 {item.label}
@@ -191,9 +223,7 @@ export default function ReportHazardScreen() {
         })}
       </View>
 
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>
-        Severity
-      </Text>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Severity</Text>
 
       <View style={styles.severityRow}>
         {severityLevels.map((level) => {
@@ -214,7 +244,7 @@ export default function ReportHazardScreen() {
               <Text
                 style={[
                   styles.severityText,
-                  { color: selected ? '#ffffff' : theme.text },
+                  { color: selected ? "#ffffff" : theme.text },
                 ]}
               >
                 {level}
@@ -224,9 +254,7 @@ export default function ReportHazardScreen() {
         })}
       </View>
 
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>
-        Evidence
-      </Text>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Evidence</Text>
 
       <View style={styles.featureGrid}>
         <TouchableOpacity
@@ -300,7 +328,11 @@ export default function ReportHazardScreen() {
             </>
           ) : (
             <>
-              <Ionicons name="location-outline" size={28} color={theme.primary} />
+              <Ionicons
+                name="location-outline"
+                size={28}
+                color={theme.primary}
+              />
 
               <Text style={[styles.featureTitle, { color: theme.text }]}>
                 Capture GPS
@@ -355,7 +387,7 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   subHeader: {
     fontSize: 14,
@@ -364,32 +396,32 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
     marginTop: 10,
   },
   hazardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     marginBottom: 16,
   },
   hazardButton: {
-    width: '48%',
+    width: "48%",
     borderWidth: 1,
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 10,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 6,
   },
   hazardText: {
     fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
   severityRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     marginBottom: 16,
   },
@@ -398,13 +430,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     padding: 13,
-    alignItems: 'center',
+    alignItems: "center",
   },
   severityText: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   featureGrid: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 18,
   },
@@ -414,28 +446,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 16,
     padding: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   featureTitle: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   featureSubtitle: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 6,
   },
   cardThumbnail: {
-    width: '100%',
+    width: "100%",
     height: 85,
     borderRadius: 12,
   },
   removeInlineText: {
-    color: '#dc2626',
-    fontWeight: 'bold',
+    color: "#dc2626",
+    fontWeight: "bold",
     marginTop: 8,
   },
   textArea: {
@@ -443,20 +475,34 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     minHeight: 120,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     marginBottom: 18,
   },
   submitButton: {
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
     gap: 8,
   },
   submitText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
+    color: "#ffffff",
+    fontWeight: "bold",
     fontSize: 16,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 22,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 18,
   },
 });

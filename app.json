@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.RoadGuard"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,12 +29,19 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
     ],
     "extra": {
       "eas": {
-        "projectId": "44f19f80-2ff8-468d-8139-43a3ca4660ee"
+        "projectId": "d3180ef9-c806-40d2-8954-63c8d1852703"
       }
-    }
+    },
+    "owner": "matinabajra"
   }
 }
