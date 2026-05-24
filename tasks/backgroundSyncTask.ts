@@ -1,5 +1,6 @@
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundTask from 'expo-background-task';
+import { syncPendingReports } from '../services/syncService';
 import { syncPendingReports } from '../src/services/syncService';
 
 export const BACKGROUND_SYNC_TASK = 'ROADGUARD_BACKGROUND_SYNC';
