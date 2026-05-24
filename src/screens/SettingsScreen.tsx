@@ -10,6 +10,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { logoutUser } from '../services/authService';
 import { syncPendingReports } from '../services/syncService';
+import TorchToggle from '../components/TorchToggle';
 // import AdBanner from '../components/AdBanner';
 
 export default function SettingsScreen({ navigation }: any) {
@@ -58,6 +59,8 @@ export default function SettingsScreen({ navigation }: any) {
       >
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
+
+      <TorchToggle />
 
       <TouchableOpacity
   style={styles.testButton}
