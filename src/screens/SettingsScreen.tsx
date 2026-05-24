@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { logoutUser } from '../services/authService';
+import { syncPendingReports } from '../services/syncService';
 // import AdBanner from '../components/AdBanner';
 
 export default function SettingsScreen({ navigation }: any) {
@@ -57,6 +58,22 @@ export default function SettingsScreen({ navigation }: any) {
       >
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+  style={styles.testButton}
+  onPress={async () => {
+    await syncPendingReports();
+
+    Alert.alert(
+      'Background Sync Test',
+      'Pending reports synced successfully.'
+    );
+  }}
+>
+  <Text style={styles.testButtonText}>
+    Run Background Sync
+  </Text>
+</TouchableOpacity>
     </View>
   );
 }
@@ -101,4 +118,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  testButton: {
+  backgroundColor: '#2563eb',
+  padding: 14,
+  borderRadius: 12,
+  marginTop: 20,
+  alignItems: 'center',
+},
+
+testButtonText: {
+  color: '#ffffff',
+  fontWeight: 'bold',
+  fontSize: 15,
+},
 });
