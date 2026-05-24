@@ -15,7 +15,7 @@ export type HazardReport = {
   description: string;
   latitude: number;
   longitude: number;
-  photoUrl?: string;
+  photoUri?: string;
 };
 
 export const submitHazardReport = async (report: HazardReport) => {

@@ -27,25 +27,14 @@ export default function HazardDetailScreen({ route, navigation }: any) {
           report.latitude,
           report.longitude
         );
-
         setAddress(resolvedAddress);
       } catch {
-        setAddress(
-          `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`
-        );
+        setAddress(`${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`);
       }
     };
 
     loadAddress();
   }, []);
-
-  const handleReadAloud = () => {
-    Speech.speak(report.description, {
-      language: 'en-AU',
-      pitch: 1,
-      rate: 0.9,
-    });
-  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
@@ -58,6 +47,16 @@ export default function HazardDetailScreen({ route, navigation }: any) {
     }
   };
 
+  const handleReadAloud = () => {
+    Speech.speak(report.description, {
+      language: 'en-AU',
+      pitch: 1,
+      rate: 0.9,
+    });
+  };
+
+  const imageUri = report.photoUri || report.photoUrl;
+
   return (
     <ScrollView
       contentContainerStyle={[
@@ -65,22 +64,48 @@ export default function HazardDetailScreen({ route, navigation }: any) {
         { backgroundColor: theme.background },
       ]}
     >
-      <TouchableOpacity
-        style={[
-          styles.backButton,
-          {
-            backgroundColor: theme.card,
-            borderColor: theme.border,
-          },
-        ]}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons
-          name="arrow-back-outline"
-          size={22}
-          color={theme.text}
-        />
-      </TouchableOpacity>
+      <View style={styles.topRow}>
+        <TouchableOpacity
+          style={[
+            styles.iconButton,
+            {
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+            },
+          ]}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back-outline" size={22} color={theme.text} />
+        </TouchableOpacity>
+
+        <View
+          style={[
+            styles.statusPill,
+            {
+              backgroundColor:
+                report.source === 'online' ? '#dcfce7' : '#fef3c7',
+            },
+          ]}
+        >
+          <Ionicons
+            name={
+              report.source === 'online'
+                ? 'cloud-done-outline'
+                : 'cloud-offline-outline'
+            }
+            size={15}
+            color={report.source === 'online' ? '#16a34a' : '#f59e0b'}
+          />
+          <Text
+            style={[
+              styles.statusPillText,
+              { color: report.source === 'online' ? '#16a34a' : '#f59e0b' },
+            ]}
+          >
+            {report.source === 'online' ? 'Uploaded' : 'Local'}
+          </Text>
+        </View>
+      </View>
 
       <Text style={[styles.title, { color: theme.text }]}>
         {report.hazardType}
@@ -92,38 +117,67 @@ export default function HazardDetailScreen({ route, navigation }: any) {
           { backgroundColor: getSeverityColor(report.severity) },
         ]}
       >
-        <Text style={styles.severityText}>
-          {report.severity.toUpperCase()}
-        </Text>
+        <Ionicons name="warning-outline" size={14} color="#ffffff" />
+        <Text style={styles.severityText}>{report.severity.toUpperCase()}</Text>
       </View>
 
-      {report.photoUrl ? (
-        <Image source={{ uri: report.photoUrl }} style={styles.image} />
-      ) : null}
+      {imageUri ? (
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() =>
+            navigation.navigate('ImagePreview', {
+              imageUri,
+            })
+          }
+        >
+          <Image source={{ uri: imageUri }} style={styles.heroImage} />
+
+          <View style={styles.imageOverlay}>
+            <Ionicons name="expand-outline" size={18} color="#ffffff" />
+            <Text style={styles.imageOverlayText}>Tap to view</Text>
+          </View>
+        </TouchableOpacity>
+      ) : (
+        <View
+          style={[
+            styles.noImageCard,
+            {
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+            },
+          ]}
+        >
+          <Ionicons name="image-outline" size={34} color={theme.subText} />
+          <Text style={[styles.noImageText, { color: theme.subText }]}>
+            No image attached
+          </Text>
+        </View>
+      )}
 
       <View
         style={[
-          styles.descriptionCard,
+          styles.card,
           {
             backgroundColor: theme.card,
             borderColor: theme.border,
           },
         ]}
       >
-        <View style={styles.descriptionHeader}>
-          <Text style={[styles.cardLabel, { color: theme.subText }]}>
-            Description
-          </Text>
+        <View style={styles.cardHeader}>
+          <View>
+            <Text style={[styles.cardLabel, { color: theme.subText }]}>
+              Description
+            </Text>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>
+              Hazard details
+            </Text>
+          </View>
 
           <TouchableOpacity
-            style={[styles.speakerButton, { backgroundColor: theme.primary }]}
+            style={[styles.smallRoundButton, { backgroundColor: theme.primary }]}
             onPress={handleReadAloud}
           >
-            <Ionicons
-              name="volume-high-outline"
-              size={16}
-              color="#ffffff"
-            />
+            <Ionicons name="volume-high-outline" size={16} color="#ffffff" />
           </TouchableOpacity>
         </View>
 
@@ -134,7 +188,7 @@ export default function HazardDetailScreen({ route, navigation }: any) {
 
       <View
         style={[
-          styles.locationCard,
+          styles.card,
           {
             backgroundColor: theme.card,
             borderColor: theme.border,
@@ -142,69 +196,48 @@ export default function HazardDetailScreen({ route, navigation }: any) {
         ]}
       >
         <View style={styles.locationHeader}>
-          <View style={styles.locationIconBox}>
-            <Ionicons
-              name="location-outline"
-              size={22}
-              color={theme.primary}
-            />
+          <View
+            style={[
+              styles.locationIconBox,
+              { backgroundColor: `${theme.primary}22` },
+            ]}
+          >
+            <Ionicons name="location-outline" size={23} color={theme.primary} />
           </View>
 
           <View style={{ flex: 1 }}>
             <Text style={[styles.cardLabel, { color: theme.subText }]}>
-              GPS Location
+              Location
             </Text>
-
             <Text style={[styles.locationText, { color: theme.text }]}>
               {address}
+            </Text>
+            <Text style={[styles.gpsText, { color: theme.subText }]}>
+              GPS ({report.latitude.toFixed(4)}, {report.longitude.toFixed(4)})
             </Text>
           </View>
         </View>
 
-        <MapView
-          style={styles.inlineMap}
-          initialRegion={{
-            latitude: report.latitude,
-            longitude: report.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-        >
-          <Marker
-            coordinate={{
+        <View style={styles.mapWrapper}>
+          <MapView
+            style={styles.inlineMap}
+            initialRegion={{
               latitude: report.latitude,
               longitude: report.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
             }}
-            title={report.hazardType}
-            description={report.description}
-          />
-        </MapView>
-      </View>
-
-      <View
-        style={[
-          styles.statusCard,
-          {
-            backgroundColor: theme.card,
-            borderColor: theme.border,
-          },
-        ]}
-      >
-        <Ionicons
-          name={
-            report.source === 'online'
-              ? 'cloud-done-outline'
-              : 'cloud-offline-outline'
-          }
-          size={20}
-          color={report.source === 'online' ? '#16a34a' : '#f59e0b'}
-        />
-
-        <Text style={[styles.statusText, { color: theme.subText }]}>
-          {report.source === 'online'
-            ? 'Uploaded to Firebase'
-            : 'Saved locally'}
-        </Text>
+          >
+            <Marker
+              coordinate={{
+                latitude: report.latitude,
+                longitude: report.longitude,
+              }}
+              title={report.hazardType}
+              description={report.description}
+            />
+          </MapView>
+        </View>
       </View>
     </ScrollView>
   );
@@ -217,104 +250,146 @@ const styles = StyleSheet.create({
     paddingTop: 55,
     paddingBottom: 40,
   },
-  backButton: {
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  iconButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 22,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    gap: 5,
+  },
+  statusPillText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   title: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   severityBadge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 999,
-    marginBottom: 22,
+    marginBottom: 18,
+    gap: 6,
   },
   severityText: {
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 12,
   },
-  image: {
+  heroImage: {
     width: '100%',
-    height: 220,
-    borderRadius: 16,
-    marginBottom: 18,
+    height: 230,
+    borderRadius: 18,
+    marginBottom: 16,
   },
-  descriptionCard: {
+  imageOverlay: {
+    position: 'absolute',
+    right: 14,
+    bottom: 30,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  imageOverlayText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  noImageCard: {
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 18,
+    padding: 22,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  noImageText: {
+    marginTop: 8,
+    fontWeight: '600',
+  },
+  card: {
+    borderWidth: 1,
+    borderRadius: 18,
     padding: 16,
     marginBottom: 16,
   },
-  descriptionHeader: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  speakerButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 12,
   },
   cardLabel: {
     fontSize: 12,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+    marginBottom: 3,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  smallRoundButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   description: {
     fontSize: 16,
     lineHeight: 24,
   },
-  locationCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
   locationHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 14,
   },
   locationIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
   locationText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
+  },
+  gpsText: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  mapWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   inlineMap: {
     width: '100%',
-    height: 180,
-    borderRadius: 14,
-  },
-  statusCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusText: {
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '600',
+    height: 190,
   },
 });

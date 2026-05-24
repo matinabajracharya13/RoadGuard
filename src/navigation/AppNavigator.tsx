@@ -11,6 +11,7 @@ import TabNavigator from "./TabNavigator";
 import { auth } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
 import ReportHazardScreen from "../screens/ReportHazardScreen";
+import ImagePreviewScreen from "../screens/ImagePreviewScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,7 @@ export default function AppNavigator() {
             <Stack.Screen name="MainTabs" component={TabNavigator} />
             <Stack.Screen name="HazardDetail" component={HazardDetailScreen} />
             <Stack.Screen name="Report" component={ReportHazardScreen} />
+            <Stack.Screen name="ImagePreview" component={ImagePreviewScreen} />
           </>
         ) : (
           <>
