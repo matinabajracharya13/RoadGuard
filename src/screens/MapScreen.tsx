@@ -1,19 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { watchBattery } from "../services/batteryService";
 import { useTheme } from '../context/ThemeContext';
 
 export default function ReportHazardScreen() {
   const { theme } = useTheme();
-  const [battery, setBattery] = useState<number>(1);
 
-  useEffect(() => {
-  const unsubscribe = watchBattery(
-    (level: number) => setBattery(level),
-    (low: number) => console.log("Battery low — pause background sync", low)
-  );
-  return unsubscribe;
-}, []);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
