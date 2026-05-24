@@ -7,18 +7,26 @@ export async function getBatteryLevel(): Promise<number> {
   return await Battery.getBatteryLevelAsync();
 }
 
-// Subscribe to battery changes. Returns an unsubscribe function.
-// onLow fires when battery drops below the threshold (default 15%).
+// Subscribe to live battery changes.
+// onChange fires on every update.
+// onLow fires once when battery crosses below the threshold.
+// Returns an unsubscribe function.
 export function watchBattery(
   onChange: LevelCallback,
   onLow: LevelCallback,
-  threshold: number = 0.20,
+  threshold: number = 0.15,
 ): () => void {
+  let wasLow = false;
+
   const sub = Battery.addBatteryLevelListener(({ batteryLevel }) => {
     onChange(batteryLevel);
-    if (batteryLevel < threshold) {
+
+    const isNowLow = batteryLevel < threshold;
+    if (isNowLow && !wasLow) {
       onLow(batteryLevel);
     }
+    wasLow = isNowLow;
   });
+
   return () => sub.remove();
 }

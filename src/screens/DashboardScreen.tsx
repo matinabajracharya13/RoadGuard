@@ -38,13 +38,18 @@ export default function DashboardScreen({ navigation }: any) {
 
   useEffect(() => {
     // 1. Get the level once when the screen first mounts
-    getBatteryLevel().then(setBattery);
+    getBatteryLevel().then((level) => {
+      setBattery(level);
+      setIsLow(level < 0.15);
+    });
 
     // 2. Subscribe to live changes
     const unsubscribe = watchBattery(
-      (level) => setBattery(level),
+      (level) => {
+        setBattery(level);
+        setIsLow(level < 0.15); // update isLow every time, both directions
+      },
       (low) => {
-        setIsLow(true);
         console.log("Battery low — pausing background sync", low);
       },
     );
@@ -56,7 +61,6 @@ export default function DashboardScreen({ navigation }: any) {
   useEffect(() => {
     loadReports();
   }, []);
-
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
@@ -96,7 +100,6 @@ export default function DashboardScreen({ navigation }: any) {
     }
   };
 
-  
   const onRefresh = async () => {
     setRefreshing(true);
     await loadReports();
