@@ -21,6 +21,7 @@ import {
   requestNotificationPermission,
   sendHazardNotification,
 } from "../services/notificationService";
+import { saveImageLocally } from "../services/localImageService";
 
 export default function ReportHazardScreen({ navigation, route }: any) {
   const { theme } = useTheme();
@@ -92,6 +93,12 @@ export default function ReportHazardScreen({ navigation, route }: any) {
       return;
     }
 
+    let savedPhotoUri = "";
+
+    if (photoUri) {
+      savedPhotoUri = await saveImageLocally(photoUri);
+    }
+
     if (!location) {
       Alert.alert("Location Required", "Please capture GPS location first.");
       return;
@@ -103,6 +110,7 @@ export default function ReportHazardScreen({ navigation, route }: any) {
       description: description.trim(),
       latitude: location.latitude,
       longitude: location.longitude,
+      photoUri: savedPhotoUri,
     };
 
     try {
@@ -117,10 +125,12 @@ export default function ReportHazardScreen({ navigation, route }: any) {
           reportData.longitude,
         );
 
-        Alert.alert(
-          "Saved Offline",
-          "No internet connection. Your report has been saved locally.",
-        );
+        navigation.replace("HazardDetail", {
+          report: {
+            ...reportData,
+            source: "local",
+          },
+        });
 
         resetForm();
         return;
@@ -130,10 +140,13 @@ export default function ReportHazardScreen({ navigation, route }: any) {
       await requestNotificationPermission();
       await sendHazardNotification(reportData.hazardType, reportData.severity);
 
-      Alert.alert(
-        "Report Submitted",
-        "Your hazard report has been saved online.",
-      );
+      navigation.replace("HazardDetail", {
+        report: {
+          ...reportData,
+          source: "online",
+        },
+      });
+
       resetForm();
     } catch {
       savePendingHazardReport(
@@ -144,12 +157,15 @@ export default function ReportHazardScreen({ navigation, route }: any) {
         reportData.longitude,
       );
 
-      Alert.alert(
-        "Saved Offline",
-        "Something went wrong online, so your report was saved locally.",
-      );
       await requestNotificationPermission();
-        await sendHazardNotification(reportData.hazardType, reportData.severity);
+      await sendHazardNotification(reportData.hazardType, reportData.severity);
+
+      navigation.replace("HazardDetail", {
+        report: {
+          ...reportData,
+          source: "local",
+        },
+      });
 
       resetForm();
     }
