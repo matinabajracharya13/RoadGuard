@@ -403,11 +403,12 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 30,
+    marginLeft: 12,
+    marginBottom: 24,
     fontWeight: "bold",
   },
   subHeader: {
     fontSize: 14,
-    marginTop: 6,
     marginBottom: 24,
   },
   sectionTitle: {
