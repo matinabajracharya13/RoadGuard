@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-} from 'react-native';
-import { useTheme } from '../context/ThemeContext';
-import { logoutUser } from '../services/authService';
-import { syncPendingReports } from '../services/syncService';
-import TorchToggle from '../components/TorchToggle';
+} from "react-native";
+import { useTheme } from "../context/ThemeContext";
+import { logoutUser } from "../services/authService";
+import { syncPendingReports } from "../services/syncService";
+import TorchToggle from "../components/TorchToggle";
 // import AdBanner from '../components/AdBanner';
 
 export default function SettingsScreen({ navigation }: any) {
@@ -19,9 +19,9 @@ export default function SettingsScreen({ navigation }: any) {
   const handleLogout = async () => {
     try {
       await logoutUser();
-      navigation.getParent()?.replace('Login');
+      navigation.getParent()?.replace("Login");
     } catch {
-      Alert.alert('Logout Failed', 'Please try again.');
+      Alert.alert("Logout Failed", "Please try again.");
     }
   };
 
@@ -29,7 +29,12 @@ export default function SettingsScreen({ navigation }: any) {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.text }]}>Settings</Text>
 
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: theme.card, borderColor: theme.border },
+        ]}
+      >
         <View>
           <Text style={[styles.label, { color: theme.text }]}>Dark Mode</Text>
           <Text style={[styles.description, { color: theme.subText }]}>
@@ -42,9 +47,16 @@ export default function SettingsScreen({ navigation }: any) {
 
       {/* <AdBanner /> */}
 
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: theme.card, borderColor: theme.border },
+        ]}
+      >
         <View>
-          <Text style={[styles.label, { color: theme.text }]}>Notifications</Text>
+          <Text style={[styles.label, { color: theme.text }]}>
+            Notifications
+          </Text>
           <Text style={[styles.description, { color: theme.subText }]}>
             Hazard alerts will be added later.
           </Text>
@@ -53,30 +65,30 @@ export default function SettingsScreen({ navigation }: any) {
         <Switch value={false} disabled />
       </View>
 
+      
+
+      <TorchToggle />
+
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={async () => {
+          await syncPendingReports();
+
+          Alert.alert(
+            "Background Sync Test",
+            "Pending reports synced successfully.",
+          );
+        }}
+      >
+        <Text style={styles.testButtonText}>Run Background Sync</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={[styles.logoutButton, { backgroundColor: theme.primary }]}
         onPress={handleLogout}
       >
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
-
-      <TorchToggle />
-
-      <TouchableOpacity
-  style={styles.testButton}
-  onPress={async () => {
-    await syncPendingReports();
-
-    Alert.alert(
-      'Background Sync Test',
-      'Pending reports synced successfully.'
-    );
-  }}
->
-  <Text style={styles.testButtonText}>
-    Run Background Sync
-  </Text>
-</TouchableOpacity>
     </View>
   );
 }
@@ -89,7 +101,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 24,
   },
   card: {
@@ -97,13 +109,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 18,
     marginBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   label: {
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   description: {
     fontSize: 13,
@@ -114,24 +126,24 @@ const styles = StyleSheet.create({
     marginTop: 24,
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   logoutText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
+    color: "#ffffff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   testButton: {
-  backgroundColor: '#2563eb',
-  padding: 14,
-  borderRadius: 12,
-  marginTop: 20,
-  alignItems: 'center',
-},
+    backgroundColor: "#2563eb",
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 20,
+    alignItems: "center",
+  },
 
-testButtonText: {
-  color: '#ffffff',
-  fontWeight: 'bold',
-  fontSize: 15,
-},
+  testButtonText: {
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
 });
