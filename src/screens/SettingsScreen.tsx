@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-} from "react-native";
-import { useTheme } from "../context/ThemeContext";
-import { logoutUser } from "../services/authService";
-import { syncPendingReports } from "../services/syncService";
-import TorchToggle from "../components/TorchToggle";
-// import AdBanner from '../components/AdBanner';
+} from 'react-native';
+import { useTheme } from '../context/ThemeContext';
+import { logoutUser } from '../services/authService';
+import { syncPendingReports } from '../services/syncService';
+import TorchToggle from '../components/TorchToggle';
+import AdBanner from '../components/AdBanner';
 
 export default function SettingsScreen({ navigation }: any) {
   const { theme, darkMode, toggleTheme } = useTheme();

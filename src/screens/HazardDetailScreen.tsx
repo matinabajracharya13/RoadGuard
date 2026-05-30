@@ -24,12 +24,12 @@ export default function HazardDetailScreen({ route, navigation }: any) {
     const loadAddress = async () => {
       try {
         const resolvedAddress = await getAddressFromCoordinates(
-          report.latitude,
-          report.longitude
+          report?.latitude,
+          report?.longitude
         );
         setAddress(resolvedAddress);
       } catch {
-        setAddress(`${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`);
+        setAddress(`${report?.latitude.toFixed(4)}, ${report?.longitude.toFixed(4)}`);
       }
     };
 
@@ -48,14 +48,14 @@ export default function HazardDetailScreen({ route, navigation }: any) {
   };
 
   const handleReadAloud = () => {
-    Speech.speak(report.description, {
+    Speech.speak(report?.description, {
       language: 'en-AU',
       pitch: 1,
       rate: 0.9,
     });
   };
 
-  const imageUri = report.photoUri || report.photoUrl;
+  const imageUri = report?.photoUri || report?.photoUrl;
 
   return (
     <ScrollView
@@ -83,42 +83,42 @@ export default function HazardDetailScreen({ route, navigation }: any) {
             styles.statusPill,
             {
               backgroundColor:
-                report.source === 'online' ? '#dcfce7' : '#fef3c7',
+                report?.source === 'online' ? '#dcfce7' : '#fef3c7',
             },
           ]}
         >
           <Ionicons
             name={
-              report.source === 'online'
+              report?.source === 'online'
                 ? 'cloud-done-outline'
                 : 'cloud-offline-outline'
             }
             size={15}
-            color={report.source === 'online' ? '#16a34a' : '#f59e0b'}
+            color={report?.source === 'online' ? '#16a34a' : '#f59e0b'}
           />
           <Text
             style={[
               styles.statusPillText,
-              { color: report.source === 'online' ? '#16a34a' : '#f59e0b' },
+              { color: report?.source === 'online' ? '#16a34a' : '#f59e0b' },
             ]}
           >
-            {report.source === 'online' ? 'Uploaded' : 'Local'}
+            {report?.source === 'online' ? 'Uploaded' : 'Local'}
           </Text>
         </View>
       </View>
 
       <Text style={[styles.title, { color: theme.text }]}>
-        {report.hazardType}
+        {report?.hazardType}
       </Text>
 
       <View
         style={[
           styles.severityBadge,
-          { backgroundColor: getSeverityColor(report.severity) },
+          { backgroundColor: getSeverityColor(report?.severity) },
         ]}
       >
         <Ionicons name="warning-outline" size={14} color="#ffffff" />
-        <Text style={styles.severityText}>{report.severity.toUpperCase()}</Text>
+        <Text style={styles.severityText}>{report?.severity.toUpperCase()}</Text>
       </View>
 
       {imageUri ? (
@@ -182,7 +182,7 @@ export default function HazardDetailScreen({ route, navigation }: any) {
         </View>
 
         <Text style={[styles.description, { color: theme.text }]}>
-          {report.description}
+          {report?.description}
         </Text>
       </View>
 
@@ -213,7 +213,7 @@ export default function HazardDetailScreen({ route, navigation }: any) {
               {address}
             </Text>
             <Text style={[styles.gpsText, { color: theme.subText }]}>
-              GPS ({report.latitude.toFixed(4)}, {report.longitude.toFixed(4)})
+              GPS ({report?.latitude.toFixed(4)}, {report?.longitude.toFixed(4)})
             </Text>
           </View>
         </View>
@@ -222,19 +222,19 @@ export default function HazardDetailScreen({ route, navigation }: any) {
           <MapView
             style={styles.inlineMap}
             initialRegion={{
-              latitude: report.latitude,
-              longitude: report.longitude,
+              latitude: report?.latitude,
+              longitude: report?.longitude,
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }}
           >
             <Marker
               coordinate={{
-                latitude: report.latitude,
-                longitude: report.longitude,
+                latitude: report?.latitude,
+                longitude: report?.longitude,
               }}
-              title={report.hazardType}
-              description={report.description}
+              title={report?.hazardType}
+              description={report?.description}
             />
           </MapView>
         </View>

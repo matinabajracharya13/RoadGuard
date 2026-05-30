@@ -3,9 +3,9 @@ import React, { useEffect } from 'react';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { initDatabase } from './src/services/sqliteService';
-import { registerBackgroundSyncTask } from './src/tasks/backgroundSyncTask';
+import { registerBackgroundSyncTask } from './src/tasks/backgroundSyncTask';  
 
-export default function App() {
+function App() {
   useEffect(() => {
     initDatabase();
     registerBackgroundSyncTask();
@@ -17,3 +17,5 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
+export default App;
