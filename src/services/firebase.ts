@@ -7,14 +7,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+const EXPO_PUBLIC_FIREBASE_API_KEY="AIzaSyAFc5klRjiBQkQa-3TkyR-Hg3aYLf6XUW0"
+const EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN="roadguard-9b257.firebaseapp.com"
+const EXPO_PUBLIC_FIREBASE_PROJECT_ID="roadguard-9b257"
+const EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET="roadguard-9b257.firebasestorage.app"
+const EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="881982424869"
+const EXPO_PUBLIC_FIREBASE_APP_ID="1:881982424869:web:bbef725921e4c033927ccc"
+
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  apiKey: EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: EXPO_PUBLIC_FIREBASE_APP_ID,
 };
+
+
 
 const app = initializeApp(firebaseConfig);
 

@@ -11,7 +11,7 @@ import { useTheme } from '../context/ThemeContext';
 import { logoutUser } from '../services/authService';
 import { syncPendingReports } from '../services/syncService';
 import TorchToggle from '../components/TorchToggle';
-// import AdBanner from '../components/AdBanner';
+import AdBanner from '../components/AdBanner';
 
 export default function SettingsScreen({ navigation }: any) {
   const { theme, darkMode, toggleTheme } = useTheme();
@@ -40,19 +40,6 @@ export default function SettingsScreen({ navigation }: any) {
         <Switch value={darkMode} onValueChange={toggleTheme} />
       </View>
 
-      {/* <AdBanner /> */}
-
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <View>
-          <Text style={[styles.label, { color: theme.text }]}>Notifications</Text>
-          <Text style={[styles.description, { color: theme.subText }]}>
-            Hazard alerts will be added later.
-          </Text>
-        </View>
-
-        <Switch value={false} disabled />
-      </View>
-
       <TouchableOpacity
         style={[styles.logoutButton, { backgroundColor: theme.primary }]}
         onPress={handleLogout}
@@ -76,7 +63,9 @@ export default function SettingsScreen({ navigation }: any) {
   <Text style={styles.testButtonText}>
     Run Background Sync
   </Text>
+
 </TouchableOpacity>
+  <AdBanner />
     </View>
   );
 }

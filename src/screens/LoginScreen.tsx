@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+
 import { loginUser } from '../services/authService';
 import { useTheme } from '../context/ThemeContext';
 
@@ -26,9 +27,13 @@ export default function LoginScreen({ navigation }: any) {
 
     try {
       setLoading(true);
+
       await loginUser(email.trim(), password);
-    //   navigation.replace('MainTabs');
+
+      navigation.replace('MainTabs');
     } catch (error: any) {
+      console.log('Login error:', error);
+
       Alert.alert(
         'Login Failed',
         'Please check your email and password and try again.'
@@ -40,13 +45,18 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.title, { color: theme.text }]}>RoadGuard</Text>
+      <Text style={[styles.title, { color: theme.text }]}>
+        RoadGuard
+      </Text>
 
       <Text style={[styles.subtitle, { color: theme.subText }]}>
         Login to report road hazards
       </Text>
 
       <TextInput
+        testID="emailInput"
+        nativeID='emailInput'
+        accessibilityLabel="Email input"
         style={[
           styles.input,
           {
@@ -64,6 +74,9 @@ export default function LoginScreen({ navigation }: any) {
       />
 
       <TextInput
+        testID="passwordInput"
+        nativeID='passwordInput'
+        accessibilityLabel="Password input"
         style={[
           styles.input,
           {
@@ -80,6 +93,9 @@ export default function LoginScreen({ navigation }: any) {
       />
 
       <TouchableOpacity
+        testID="loginButton"
+
+        accessibilityLabel="Login"
         style={[styles.button, { backgroundColor: theme.primary }]}
         onPress={handleLogin}
         disabled={loading}
@@ -91,9 +107,26 @@ export default function LoginScreen({ navigation }: any) {
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+      <TouchableOpacity
+        testID="registerButton"
+        accessibilityLabel="Register"
+        onPress={() => navigation.navigate('Register')}
+      >
         <Text style={[styles.link, { color: theme.primary }]}>
           Don’t have an account? Register
+        </Text>
+      </TouchableOpacity>
+
+      {/* Temporary Test Lab Access */}
+      <TouchableOpacity
+        style={[
+          styles.demoButton,
+          { backgroundColor: theme.card, borderColor: theme.border },
+        ]}
+        onPress={() => navigation.replace('MainTabs')}
+      >
+        <Text style={{ color: theme.text, fontWeight: '600' }}>
+          Test Lab Demo Access
         </Text>
       </TouchableOpacity>
     </View>
@@ -106,37 +139,51 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: 'center',
   },
+
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
   },
+
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 32,
     marginTop: 8,
   },
+
   input: {
     padding: 14,
     borderRadius: 10,
     marginBottom: 14,
     borderWidth: 1,
   },
+
   button: {
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 8,
   },
+
   buttonText: {
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,
   },
+
   link: {
     textAlign: 'center',
     marginTop: 20,
     fontWeight: '600',
+  },
+
+  demoButton: {
+    marginTop: 20,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
   },
 });

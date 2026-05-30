@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "RoadGuard",
-    "slug": "RoadGuard",
+    "slug": "roadguard",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,7 +23,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.nabins.RoadGuard"
+      "package": "com.matinabajra.roadguard",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCjLmrcG78WWXoQHSXL0Dfd6ygB1Npt9_M"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -40,9 +45,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "44f19f80-2ff8-468d-8139-43a3ca4660ee"
+        "projectId": "3cbd67e8-df63-46b4-8e3a-089a1649fa32"
       }
     },
-    "owner": "nabins"
+    "owner": "matina13"
   }
 }

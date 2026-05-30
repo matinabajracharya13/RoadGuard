@@ -1,0 +1,66 @@
+{
+  "steps": [
+    {
+      "action": "enter_text",
+      "text": "test@gmail.com"
+    },
+    {
+      "action": "enter_text",
+      "text": "TestingAccount!"
+    },
+    {
+      "action": "click",
+      "text": "Login"
+    },
+
+    {
+      "action": "wait",
+      "seconds": 3
+    },
+
+    {
+      "action": "click",
+      "text": "Detect"
+    },
+
+    {
+      "action": "wait",
+      "seconds": 2
+    },
+
+    {
+      "action": "click",
+      "text": "Pothole"
+    },
+
+    {
+      "action": "click",
+      "text": "High"
+    },
+
+    {
+      "action": "enter_text",
+      "text": "Robo test hazard report"
+    },
+
+    {
+      "action": "click",
+      "text": "Capture GPS"
+    },
+
+    {
+      "action": "wait",
+      "seconds": 2
+    },
+
+    {
+      "action": "click",
+      "text": "Submit Hazard Report"
+    },
+
+    {
+      "action": "wait",
+      "seconds": 5
+    }
+  ]
+}
