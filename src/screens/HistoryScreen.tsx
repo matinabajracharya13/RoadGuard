@@ -255,7 +255,7 @@ export default function HistoryScreen() {
         </TouchableOpacity>
       </View>
 
-      {activeTab === 'local' && (
+      {/* {activeTab === 'local' && (
         <TouchableOpacity
           style={[styles.syncButton, { backgroundColor: theme.primary }]}
           onPress={handleSync}
@@ -263,7 +263,7 @@ export default function HistoryScreen() {
           <Ionicons name="sync-outline" size={18} color="#ffffff" />
           <Text style={styles.syncButtonText}>Sync Pending Reports</Text>
         </TouchableOpacity>
-      )}
+      )} */}
 
       <FlatList
         data={filteredReports}

@@ -45,9 +45,7 @@ export default function SettingsScreen({ navigation }: any) {
         <Switch value={darkMode} onValueChange={toggleTheme} />
       </View>
 
-      {/* <AdBanner /> */}
-
-      <View
+      {/* <View
         style={[
           styles.card,
           { backgroundColor: theme.card, borderColor: theme.border },
@@ -63,7 +61,7 @@ export default function SettingsScreen({ navigation }: any) {
         </View>
 
         <Switch value={false} disabled />
-      </View>
+      </View> */}
 
       
 
@@ -89,6 +87,8 @@ export default function SettingsScreen({ navigation }: any) {
       >
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
+
+      <AdBanner />
     </View>
   );
 }

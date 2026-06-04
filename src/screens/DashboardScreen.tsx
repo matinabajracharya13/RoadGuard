@@ -23,6 +23,8 @@ type HazardReport = {
   longitude: number;
   photoUrl?: string;
   source?: string;
+  reportedBy?: string;
+  userEmail?: string;
   createdAt: any;
 };
 
@@ -40,14 +42,14 @@ export default function DashboardScreen({ navigation }: any) {
     // 1. Get the level once when the screen first mounts
     getBatteryLevel().then((level) => {
       setBattery(level);
-      setIsLow(level < 0.15);
+      setIsLow(level < 0.50);
     });
 
     // 2. Subscribe to live changes
     const unsubscribe = watchBattery(
       (level) => {
         setBattery(level);
-        setIsLow(level < 0.15); // update isLow every time, both directions
+        setIsLow(level < 0.50); // update isLow every time, both directions
       },
       (low) => {
         console.log("Battery low — pausing background sync", low);
@@ -149,6 +151,13 @@ export default function DashboardScreen({ navigation }: any) {
             {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)})
           </Text>
         </View>
+      </View>
+
+      <View style={styles.metaRow}>
+        <Ionicons name="person-outline" size={16} color={theme.subText} />
+        <Text style={[styles.metaText, { color: theme.subText }]}>
+          Reported by: {item.reportedBy || item.userEmail || "Unknown user"}
+        </Text>
       </View>
 
       <View style={styles.metaRow}>

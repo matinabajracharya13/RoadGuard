@@ -54,6 +54,7 @@ jest.mock('react-native-google-mobile-ads', () => ({
 
 jest.mock('expo-speech', () => ({
   speak: jest.fn(),
+  stop: jest.fn(),
 }));
 
 jest.mock('react-native-maps', () => {

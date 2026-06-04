@@ -16,6 +16,13 @@ jest.mock('../../services/cameraService', () => ({
   captureHazardPhoto: jest.fn(),
 }));
 
+jest.mock("../../services/authService", () => ({
+  getCurrentUserInfo: jest.fn(() => ({
+    reportedBy: "test@example.com",
+    userEmail: "test@example.com",
+  })),
+}));
+
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { describe, it, expect } from '@jest/globals';

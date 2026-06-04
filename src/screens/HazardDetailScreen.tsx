@@ -19,6 +19,7 @@ export default function HazardDetailScreen({ route, navigation }: any) {
   const { report } = route.params;
 
   const [address, setAddress] = useState('Loading location...');
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     const loadAddress = async () => {
@@ -34,6 +35,10 @@ export default function HazardDetailScreen({ route, navigation }: any) {
     };
 
     loadAddress();
+
+    return () => {
+      Speech.stop();
+    };
   }, []);
 
   const getSeverityColor = (severity: string) => {
@@ -48,10 +53,21 @@ export default function HazardDetailScreen({ route, navigation }: any) {
   };
 
   const handleReadAloud = () => {
+    if (isSpeaking) {
+      Speech.stop();
+      setIsSpeaking(false);
+      return;
+    }
+
+    setIsSpeaking(true);
+
     Speech.speak(report?.description, {
       language: 'en-AU',
       pitch: 1,
       rate: 0.9,
+      onDone: () => setIsSpeaking(false),
+      onStopped: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
     });
   };
 
@@ -174,10 +190,17 @@ export default function HazardDetailScreen({ route, navigation }: any) {
           </View>
 
           <TouchableOpacity
-            style={[styles.smallRoundButton, { backgroundColor: theme.primary }]}
+            style={[
+              styles.smallRoundButton,
+              { backgroundColor: isSpeaking ? '#dc2626' : theme.primary },
+            ]}
             onPress={handleReadAloud}
           >
-            <Ionicons name="volume-high-outline" size={16} color="#ffffff" />
+            <Ionicons
+              name={isSpeaking ? 'stop-outline' : 'volume-high-outline'}
+              size={16}
+              color="#ffffff"
+            />
           </TouchableOpacity>
         </View>
 
