@@ -143,12 +143,6 @@ export default function DetectHazardScreen({ navigation }: any) {
           {isDetecting ? 'Stop Detection' : 'Start Detection'}
         </Text>
       </TouchableOpacity>
-
-      <Text style={[styles.note, { color: theme.subText }]}>
-        Note: This is a prototype detection feature. In real use, the threshold
-        would need testing across different phones, vehicles, and road
-        conditions.
-      </Text>
     </View>
   );
 }

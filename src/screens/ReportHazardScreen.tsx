@@ -22,6 +22,7 @@ import {
   sendHazardNotification,
 } from "../services/notificationService";
 import { saveImageLocally } from "../services/localImageService";
+import { getCurrentUser } from "../services/authService";
 
 export default function ReportHazardScreen({ navigation, route }: any) {
   const { theme } = useTheme();
@@ -104,6 +105,8 @@ export default function ReportHazardScreen({ navigation, route }: any) {
       return;
     }
 
+    const currentUser = getCurrentUser();
+
     const reportData = {
       hazardType,
       severity,
@@ -111,6 +114,9 @@ export default function ReportHazardScreen({ navigation, route }: any) {
       latitude: location.latitude,
       longitude: location.longitude,
       photoUri: savedPhotoUri,
+      reportedBy:
+        currentUser?.displayName || currentUser?.email || "Unknown user",
+      userEmail: currentUser?.email || "",
     };
 
     try {

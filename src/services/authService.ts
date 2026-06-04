@@ -16,3 +16,7 @@ export const loginUser = async (email: string, password: string) => {
 export const logoutUser = async () => {
   return await signOut(auth);
 };
+
+export const getCurrentUser = () => {
+  return auth.currentUser;
+};

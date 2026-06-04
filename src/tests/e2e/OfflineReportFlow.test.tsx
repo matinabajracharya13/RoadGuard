@@ -3,22 +3,38 @@ import { jest } from "@jest/globals";
 jest.mock("../../services/hazardService", () => ({
   submitHazardReport: jest.fn(),
 }));
+
 jest.mock("../../services/locationService", () => ({
   getCurrentLocation: jest.fn(),
 }));
+
 jest.mock("../../services/sqliteService", () => ({
   savePendingHazardReport: jest.fn(),
 }));
+
 jest.mock("../../services/cameraService", () => ({
   captureHazardPhoto: jest.fn(),
 }));
+
 jest.mock("../../services/localImageService", () => ({
   saveImageLocally: jest.fn(),
 }));
+
 jest.mock("../../services/notificationService", () => ({
   requestNotificationPermission: jest.fn(),
   sendHazardNotification: jest.fn(),
 }));
+
+jest.mock("../../services/authService", () => ({
+  registerUser: jest.fn(),
+  loginUser: jest.fn(),
+  logoutUser: jest.fn(),
+  getCurrentUser: jest.fn(() => ({
+    displayName: null,
+    email: "test@example.com",
+  })),
+}));
+
 jest.mock("@react-native-community/netinfo", () => ({
   fetch: jest.fn(),
 }));
@@ -44,17 +60,19 @@ import NetInfo from "@react-native-community/netinfo";
 describe("E2E: Offline hazard report saves locally", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
     (getCurrentLocation as any).mockResolvedValue({
       latitude: -34.9,
       longitude: 138.6,
     });
+
     (saveImageLocally as any).mockResolvedValue("");
     (requestNotificationPermission as any).mockResolvedValue(undefined);
     (sendHazardNotification as any).mockResolvedValue(undefined);
     (NetInfo.fetch as any).mockResolvedValue({ isConnected: false });
   });
 
-  it('saves the report to local SQLite when device is offline', async () => {
+  it("saves the report to local SQLite when device is offline", async () => {
     const navigation = { goBack: jest.fn(), replace: jest.fn() };
 
     const { getByText, getByPlaceholderText } = render(
@@ -63,25 +81,24 @@ describe("E2E: Offline hazard report saves locally", () => {
       </ThemeProvider>
     );
 
-    fireEvent.press(getByText('Flooding'));
-    fireEvent.press(getByText('Medium'));
+    fireEvent.press(getByText("Flooding"));
+    fireEvent.press(getByText("Medium"));
+
     fireEvent.changeText(
-      getByPlaceholderText('Describe the hazard...'),
-      'Road flooded after heavy rain'
+      getByPlaceholderText("Describe the hazard..."),
+      "Road flooded after heavy rain"
     );
 
     await act(async () => {
-      fireEvent.press(getByText('Capture GPS'));
+      fireEvent.press(getByText("Capture GPS"));
     });
-    await act(async () => {
-      await Promise.resolve();
+
+    await waitFor(() => {
+      expect(getCurrentLocation).toHaveBeenCalled();
     });
 
     await act(async () => {
-      fireEvent.press(getByText('Submit Hazard Report'));
-    });
-    await act(async () => {
-      await Promise.resolve();
+      fireEvent.press(getByText("Submit Hazard Report"));
     });
 
     await waitFor(() => {
@@ -89,9 +106,9 @@ describe("E2E: Offline hazard report saves locally", () => {
     });
 
     expect(savePendingHazardReport).toHaveBeenCalledWith(
-      'Flooding',
-      'Medium',
-      'Road flooded after heavy rain',
+      "Flooding",
+      "Medium",
+      "Road flooded after heavy rain",
       -34.9,
       138.6
     );

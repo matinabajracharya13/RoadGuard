@@ -3,22 +3,38 @@ import { jest } from "@jest/globals";
 jest.mock("../../services/hazardService", () => ({
   submitHazardReport: jest.fn(),
 }));
+
 jest.mock("../../services/locationService", () => ({
   getCurrentLocation: jest.fn(),
 }));
+
 jest.mock("../../services/sqliteService", () => ({
   savePendingHazardReport: jest.fn(),
 }));
+
 jest.mock("../../services/cameraService", () => ({
   captureHazardPhoto: jest.fn(),
 }));
+
 jest.mock("../../services/localImageService", () => ({
   saveImageLocally: jest.fn(),
 }));
+
 jest.mock("../../services/notificationService", () => ({
   requestNotificationPermission: jest.fn(),
   sendHazardNotification: jest.fn(),
 }));
+
+jest.mock("../../services/authService", () => ({
+  registerUser: jest.fn(),
+  loginUser: jest.fn(),
+  logoutUser: jest.fn(),
+  getCurrentUser: jest.fn(() => ({
+    displayName: null,
+    email: "test@example.com",
+  })),
+}));
+
 jest.mock("@react-native-community/netinfo", () => ({
   fetch: jest.fn(),
 }));
@@ -44,10 +60,12 @@ import NetInfo from "@react-native-community/netinfo";
 describe("E2E: Submit hazard report flow", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
     (getCurrentLocation as any).mockResolvedValue({
       latitude: -34.9285,
       longitude: 138.6007,
     });
+
     (submitHazardReport as any).mockResolvedValue({ id: "new123" });
     (saveImageLocally as any).mockResolvedValue("file:///saved.jpg");
     (requestNotificationPermission as any).mockResolvedValue(undefined);
@@ -55,7 +73,7 @@ describe("E2E: Submit hazard report flow", () => {
     (NetInfo.fetch as any).mockResolvedValue({ isConnected: true });
   });
 
-  it('submits a complete hazard report when all fields are filled', async () => {
+  it("submits a complete hazard report when all fields are filled", async () => {
     const navigation = { goBack: jest.fn(), replace: jest.fn() };
 
     const { getByText, getByPlaceholderText } = render(
@@ -64,28 +82,24 @@ describe("E2E: Submit hazard report flow", () => {
       </ThemeProvider>
     );
 
-    fireEvent.press(getByText('Pothole'));
-    fireEvent.press(getByText('High'));
+    fireEvent.press(getByText("Pothole"));
+    fireEvent.press(getByText("High"));
+
     fireEvent.changeText(
-      getByPlaceholderText('Describe the hazard...'),
-      'Large pothole near the intersection'
+      getByPlaceholderText("Describe the hazard..."),
+      "Large pothole near the intersection"
     );
 
-    // Capture GPS — flush the promise + state update fully
     await act(async () => {
-      fireEvent.press(getByText('Capture GPS'));
-    });
-    // extra flush so setLocation has definitely committed
-    await act(async () => {
-      await Promise.resolve();
+      fireEvent.press(getByText("Capture GPS"));
     });
 
-    // Submit — flush again
-    await act(async () => {
-      fireEvent.press(getByText('Submit Hazard Report'));
+    await waitFor(() => {
+      expect(getCurrentLocation).toHaveBeenCalled();
     });
+
     await act(async () => {
-      await Promise.resolve();
+      fireEvent.press(getByText("Submit Hazard Report"));
     });
 
     await waitFor(() => {
@@ -94,12 +108,18 @@ describe("E2E: Submit hazard report flow", () => {
 
     expect(submitHazardReport).toHaveBeenCalledWith(
       expect.objectContaining({
-        hazardType: 'Pothole',
-        severity: 'High',
-        description: 'Large pothole near the intersection',
+        hazardType: "Pothole",
+        severity: "High",
+        description: "Large pothole near the intersection",
         latitude: -34.9285,
         longitude: 138.6007,
+        photoUri: "",
+        reportedBy: "test@example.com",
+        userEmail: "test@example.com",
       })
     );
+
+    expect(requestNotificationPermission).toHaveBeenCalled();
+    expect(sendHazardNotification).toHaveBeenCalledWith("Pothole", "High");
   }, 15000);
 });

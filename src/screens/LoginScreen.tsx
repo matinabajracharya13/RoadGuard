@@ -118,7 +118,7 @@ export default function LoginScreen({ navigation }: any) {
       </TouchableOpacity>
 
       {/* Temporary Test Lab Access */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={[
           styles.demoButton,
           { backgroundColor: theme.card, borderColor: theme.border },
@@ -127,8 +127,8 @@ export default function LoginScreen({ navigation }: any) {
       >
         <Text style={{ color: theme.text, fontWeight: '600' }}>
           Test Lab Demo Access
-        </Text>
-      </TouchableOpacity>
+        </Text> */}
+      {/* </TouchableOpacity> */}
     </View>
   );
 }
